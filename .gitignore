@@ -1,0 +1,11 @@
+.venv/
+.cache/
+.vscode/settings.json
+__pycache__/
+.ipynb_checkpoints/
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+reports/figures/*.png
+*.db
