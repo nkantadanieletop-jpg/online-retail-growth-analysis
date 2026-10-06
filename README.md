@@ -1,54 +1,86 @@
-# Online Retail Growth Analysis
+# Retail Growth Analytics
 
-**Business question:** Which customer groups and markets should a small online retailer prioritize to grow repeat revenue, and what should it investigate about cancellation activity?
+**SQL · Python · Customer analytics · Commercial decision-making**
 
-This portfolio project uses real, two-year transaction data to examine sales trends, repeat purchasing, customer cohorts, RFM segments, geographic concentration, and cancellation invoices. The work is designed to end with practical priorities a commercial team could test, backed by reproducible Python and SQL.
+An end-to-end analysis of the UCI Online Retail II transaction dataset. I cleaned and loaded invoice-line data into SQLite, used SQL and pandas to investigate sales and customer behavior, and translated the results into measurable retention and data-quality actions.
 
-## Dataset
+> **Executive takeaway:** Identified customers in the RFM Champions segment represent 53.7% of identified positive sales. Prioritize a measured retention test for this high-value group, while testing reactivation for less-recent frequent buyers. Interpret customer findings alongside a material ID coverage gap: 22.8% of loaded rows have no customer ID.
 
-The [UCI Online Retail II dataset](https://archive.ics.uci.edu/dataset/502/online+retail+ii) contains 1,067,371 transaction lines from a UK-based non-store retailer between December 2009 and December 2011. It includes invoice, product, quantity, timestamp, unit price, customer ID, and country. The preparation step removed 34,335 exact duplicate rows and loaded 1,033,036 rows. Rows missing invoice, timestamp, quantity, or price are counted and reported by the script; missing customer IDs are retained for sales totals but excluded from customer analysis. Invoice numbers beginning with `C` identify cancellation activity. The dataset is available under CC BY 4.0; attribution: Chen, D. (2012), *Online Retail II*, UCI Machine Learning Repository, DOI: 10.24432/C5CG6D.
+## Results at a glance
 
-## Questions and measures
+| Finding | Observed result | Decision relevance |
+|---|---:|---|
+| Sales, Jan–Nov year comparison | £9.01M (2010) → £9.18M (2011), **+1.9%** | Sales rose while eligible invoice count fell 4.6%; mean invoice value rose, while median rose only slightly. This is descriptive, not a causal explanation. |
+| RFM Champions | **647 customers** (11.0%); **£9.33M** (53.7% of identified sales) | Protect the high-value base and measure any intervention against a holdout. |
+| RFM At risk | **888 customers** (15.1%); **£2.18M** historical sales (12.6%) | A defined audience for a reactivation experiment; historical sales are not forecast uplift. |
+| Repeat purchasing | **4,255 of 5,878 customers (72.4%)** made at least two eligible invoices | Establishes the observed repeat-customer base; does not explain why customers returned. |
+| Geographic concentration | UK: **£17.41M (85.0%)** of £20.48M sales | Maintain focus on the core market; evaluate international opportunities with customer count, repeat rate, fulfilment cost, and margin. |
+| Customer ID coverage | **235,151 rows (22.8%)** lack an ID; associated positive sales: **£3.10M (15.1%)** | Improve attribution before treating customer-level results as complete. |
+| Cancellation/credit markers | **8,292 of 53,628 invoice IDs (15.5%)** begin with `C` | Reconcile marker meaning with source transactions; it is not a verified whole-order cancellation rate. |
 
-- How do fulfilled-order sales and order counts change over time?
-- What share of identifiable customers place another order, and how quickly?
-- Which acquisition-month cohorts remain active in later months?
-- How concentrated are sales across countries and products?
-- How does the share of invoice IDs flagged as cancellations vary by month?
+Read the concise [executive summary](reports/executive-summary.md) or the detailed [findings, definitions, limitations, and recommended tests](reports/findings.md). All figures are from the saved notebook and findings report. Sales are positive line sales in GBP, not profit.
 
-Sales use positive-quantity, positive-price lines on non-cancellation invoices. The cancellation metric counts distinct invoice IDs beginning with `C`, divided by all distinct invoice IDs in the month; it is a diagnostic for cancellation or credit activity, not proof that a complete customer order was cancelled. Customer retention only includes rows with an identified customer ID. These definitions avoid treating anonymous transactions as known customers; they do not establish why a customer returned or why cancellation activity occurred.
+## Selected analysis visuals
 
-## Set up
+### Sales and invoice trends
 
-Requires Python 3.12 and Windows PowerShell. Because this workspace has a long path, keep the virtual environment in a short path under your Documents\Codex folder:
+![Monthly sales and invoice trends](reports/figures/sales-and-invoices.png)
 
-```powershell
-$venv = Join-Path $env:USERPROFILE 'Documents\Codex\venvs\retail-growth'
-New-Item -ItemType Directory -Force -Path (Split-Path $venv) | Out-Null
-python -m venv $venv
-& "$venv\Scripts\python.exe" -m pip install -r requirements.txt
-```
+### Customer cohorts
 
-Download `online_retail_II.xlsx` from the UCI dataset page above and place it in `data/raw/`. The source data is not committed to the repository. Then prepare the SQLite database and open the notebook:
+![Customer cohort activity](reports/figures/customer-cohorts.png)
 
-```powershell
-& "$venv\Scripts\python.exe" src/prepare_data.py
-& "$venv\Scripts\python.exe" -m jupyterlab
-```
+### RFM segments
 
-Open `notebooks/01_retail_growth_analysis.ipynb`. The SQL files in `sql/` can be run against `data/processed/retail.db` using SQLite; Python's standard library includes the SQLite driver.
+![RFM customer segments](reports/figures/rfm-segments.png)
+
+## Project workflow
+
+1. **Prepare:** validate and normalize the source workbook, report excluded and duplicate rows, and load transaction data into SQLite.
+2. **Query:** use reusable SQL for revenue trends, customer cohorts, and cancellation markers.
+3. **Analyze:** use pandas for repeat behavior, RFM segmentation, and geographic concentration; use matplotlib/seaborn for charts.
+4. **Recommend:** connect observed patterns to retention, reactivation, attribution, and cancellation-reconciliation tests.
 
 ## Repository map
 
 ```text
-data/raw/             Downloaded source file (ignored by Git)
-data/processed/       Generated SQLite database (ignored by Git)
-notebooks/            Analysis and charts
-reports/              Final findings and figures
-sql/                  Reusable business queries
-src/                  Reproducible data preparation
+data/
+  raw/                 Place the downloaded source workbook here (not tracked)
+  processed/           Generated SQLite database (not tracked)
+notebooks/
+  01_retail_growth_analysis.ipynb
+reports/
+  executive-summary.md
+  findings.md
+  figures/             Selected notebook charts
+sql/                   Reusable SQLite queries
+src/                   Data preparation script
+requirements.txt
 ```
 
-## Findings so far
+## Reproduce
 
-See [the findings note](reports/findings.md) for the period comparison, customer segments, commercial implications, and limitations. The executed notebook retains the underlying tables and charts.
+Requires Python 3.10 or newer. From the repository root, create an environment and install dependencies:
+
+```powershell
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+```
+
+Download the [UCI Online Retail II workbook](https://archive.ics.uci.edu/dataset/502/online+retail+ii) and save it as `data/raw/online_retail_II.xlsx`. Then prepare the database and launch Jupyter:
+
+```powershell
+python src/prepare_data.py
+python -m jupyter lab
+```
+
+Open `notebooks/01_retail_growth_analysis.ipynb` and run its cells from top to bottom. The SQL scripts in `sql/` run against the generated `data/processed/retail.db` database. The source workbook and database are excluded from Git; follow the dataset attribution below.
+
+## Data source and attribution
+
+Chen, D. (2012). [Online Retail II](https://archive.ics.uci.edu/dataset/502/online+retail+ii). UCI Machine Learning Repository. DOI: [10.24432/C5CG6D](https://doi.org/10.24432/C5CG6D). Dataset distributed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+
+## Skills demonstrated
+
+Data cleaning and validation · SQLite · analytical SQL · pandas · customer cohorts · repeat-purchase analysis · RFM segmentation · data visualization · business recommendations · metric caveats and observational-data limitations
